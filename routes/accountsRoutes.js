@@ -39,12 +39,47 @@ router.post('/', (req, res) => {
       res.status(201).json(account)
     })
     .catch(err => {
-      res.status(500).json({ error: "There was an error saving this account to the database" })
+      res.status(500).json({ message: "There was an error saving this account to the database" })
     })
 })
 
 //update account
+router.put('/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, budget } = req.body;
+  if (!name || !budget) {
+    return res.status(400).json({ message: "Please provide a name and a budget for this account" })
+  }
+  db('accounts').where({ id }).update({ name: name, budget: parseInt(budget, 10) })
+    .then(accountUpdated => {
+      if (accountUpdated) {
+        db('accounts').where({ id })
+          .then(account => {
+            res.status(201).json(account)
+          })
+      } else {
+        res.status(404).json({ message: "The account with the specified ID does not exist" })
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "The account could not be updated" })
+    })
+})
 
-
+//delete account
+router.delete('/:id', (req, res) => {
+  const { id } = req.params
+  db('accounts').where({ id }).del()
+    .then(deleted => {
+      if (deleted) {
+        res.status(204).end()
+      } else {
+        res.status(404).json({ message: "The account with the specified ID does not exist" })
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "The account could not be deleted" })
+    })
+})
 
 module.exports = router;
